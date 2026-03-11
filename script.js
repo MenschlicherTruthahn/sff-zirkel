@@ -17,6 +17,24 @@ const points2grade = {
 	0: "6"
 };
 
+// Returns the average of all ratings of all books rated by all readers. It returns a grade between 1+ and 6.
+function averageOfAllRatings(books) {
+  let sum = 0;
+  let count = 0;
+
+  books.forEach(book => {
+    const bookRatings = Object.values(book.ratings);
+	if(ratings(book.ratings, book.meta.title)) {
+		bookRatings.forEach(r => {
+			sum += r;
+			count++;
+    	});
+	}
+  });
+
+  return points2grade[Math.round(sum / count)];
+}
+
 
 
 Promise.all([
@@ -25,16 +43,29 @@ Promise.all([
 ])
 	.then(async ([club, books]) => {
 		const popupRatings = await fetch(club.rating_popup).then(r => r.text());
-		renderPage(club, Object.values(books), popupRatings);
+		const popupAverageGrade = await fetch(club.average_grade_popup).then(r => r.text());
+		renderPage(club, Object.values(books), popupRatings, popupAverageGrade);
 	});
 
-function renderPage(club, books, popupRatings) {
-	const popupHost = document.createElement("div");
-	popupHost.innerHTML = popupRatings;
-	const gradingPopup = popupHost.firstElementChild;
-	gradingPopup.hidden = true;
-	gradingPopup.style.position = "absolute";
-	document.body.appendChild(gradingPopup);
+function renderPage(club, books, popupRatings, popupAverageGrade) {
+	const popupRatingsHost = document.createElement("div");
+	popupRatingsHost.innerHTML = popupRatings;
+	const ratingsPopup = popupRatingsHost.firstElementChild;
+	ratingsPopup.hidden = true;
+	ratingsPopup.style.position = "absolute";
+	document.body.appendChild(ratingsPopup);
+
+	const popupAverageGradeHost = document.createElement("div");
+	popupAverageGradeHost.innerHTML = popupAverageGrade;
+	const averageGradePopup = popupAverageGradeHost.firstElementChild;
+	averageGradePopup.classList.add("popup-auto-size")
+	document.body.appendChild(averageGradePopup);
+
+	// Compute the average grade
+	const averageGrade = averageOfAllRatings(books);
+	// And adapt the .html responsible for the popup which uses the average grade
+	const averageGradeValue = document.getElementById("averageGradeValue");
+	averageGradeValue.innerHTML = averageGrade;
 
 	const header = document.getElementById("header")
 	document.title = club.name
@@ -46,13 +77,13 @@ function renderPage(club, books, popupRatings) {
 	const article = document.getElementById("works");
 	const sortedBooks = sortBooksByReviewDate(books);
 	sortedBooks.forEach(book => {
-		article.appendChild(renderBook(book, club, gradingPopup));
+		article.appendChild(renderBook(book, club, ratingsPopup, averageGradePopup, averageGradeValue));
 	});
 
 
 }
 
-function renderBook(book, club, gradingPopup) {
+function renderBook(book, club, gradingPopup, averageGradePopup, averageGrade) {
 	console.log(`Printing book section for ${book.meta.title}`)
 
 	const section = document.createElement("section");
@@ -238,59 +269,8 @@ function renderBook(book, club, gradingPopup) {
 		section.appendChild(rating_p);
 
 
-
-
-		// rating_p.appendChild(popupTrigger);
-
-		// Popup hover behavior
-		popupTrigger.addEventListener("mouseenter", () => {
-			const spacing = 6;
-
-			// Make popup visible but hidden so size can be measured
-			gradingPopup.style.visibility = "hidden";
-			gradingPopup.style.display = "block";
-
-			const rect = popupTrigger.getBoundingClientRect();
-			const popupRect = gradingPopup.getBoundingClientRect();
-
-			let top = rect.bottom + spacing + window.scrollY; // default below
-			let left = rect.left + window.scrollX;
-
-			// If popup overflows bottom of viewport, place it above
-			if (top + popupRect.height > window.scrollY + window.innerHeight) {
-				top = rect.top - popupRect.height - spacing + window.scrollY;
-			}
-
-			// If popup overflows right edge, shift left
-			if (left + popupRect.width > window.scrollX + window.innerWidth) {
-				left = window.scrollX + window.innerWidth - popupRect.width - spacing;
-			}
-
-			if (left < window.scrollX) {
-				left = window.scrollX + spacing;
-			}
-
-			gradingPopup.style.top = `${top}px`;
-			gradingPopup.style.left = `${left}px`;
-
-			// Now show it properly
-			gradingPopup.style.visibility = "visible";
-		});
-
-
-		popupTrigger.addEventListener("mouseleave", () => {
-			// delay hiding to allow moving into popup
-			setTimeout(() => {
-				if (!gradingPopup.matches(':hover')) {
-					gradingPopup.style.display = "none";
-				}
-			}, 100);
-		});
-
-		gradingPopup.addEventListener("mouseleave", () => {
-			gradingPopup.style.display = "none";
-		});
-
+		addPopup(popupTrigger, gradingPopup); 
+		addPopup(grade, averageGradePopup)
 	}
 
 	if (reviews(book.reviews, book.meta.title)) {
@@ -317,6 +297,56 @@ function renderBook(book, club, gradingPopup) {
 
 	console.log("")
 	return section;
+}
+
+function addPopup(popupTrigger, popup) {
+	popupTrigger.addEventListener("mouseenter", () => {
+		const spacing = 6;
+
+		// Make popup visible but hidden so size can be measured
+		popup.style.visibility = "hidden";
+		popup.style.display = "block";
+
+		const rect = popupTrigger.getBoundingClientRect();
+		const popupRect = popup.getBoundingClientRect();
+
+		let top = rect.bottom + spacing + window.scrollY; // default below
+		let left = rect.left + window.scrollX;
+
+		// If popup overflows bottom of viewport, place it above
+		if (top + popupRect.height > window.scrollY + window.innerHeight) {
+			top = rect.top - popupRect.height - spacing + window.scrollY;
+		}
+
+		// If popup overflows right edge, shift left
+		if (left + popupRect.width > window.scrollX + window.innerWidth) {
+			left = window.scrollX + window.innerWidth - popupRect.width - spacing;
+		}
+
+		if (left < window.scrollX) {
+			left = window.scrollX + spacing;
+		}
+
+		popup.style.top = `${top}px`;
+		popup.style.left = `${left}px`;
+
+		// Now show it properly
+		popup.style.visibility = "visible";
+	});
+
+
+	popupTrigger.addEventListener("mouseleave", () => {
+		// delay hiding to allow moving into popup
+		setTimeout(() => {
+			if (!popup.matches(':hover')) {
+				popup.style.display = "none";
+			}
+		}, 100);
+	});
+
+	popup.addEventListener("mouseleave", () => {
+		popup.style.display = "none";
+	});
 }
 
 function metaLine(key, value) {
