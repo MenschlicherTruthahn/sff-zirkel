@@ -111,3 +111,13 @@ p.h2subtitle {
 .popup:hover {
     display: block;    /* remain visible if mouse enters popup */
 }
+
+.popup-auto-size {
+	display: block;       
+    padding: 1px 10px !important;
+}
+
+.popup-auto-size p {
+    margin: 0;
+	font-size: 1rem;
+}
