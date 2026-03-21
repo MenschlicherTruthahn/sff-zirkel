@@ -109,10 +109,10 @@
     "review_date": "2026-03-21",
     "proposer": "Thomas",
     "ratings": {
-      "Thomas": null,
-      "Joost": null,
-      "Arne": null,
-      "Lissi": null
+      "Thomas": 13,
+      "Joost": 13,
+      "Arne": 12,
+      "Lissi": 12
     },
     "reviews": {
       "Thomas": null,
