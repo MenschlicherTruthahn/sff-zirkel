@@ -1,4 +1,4 @@
-/* Topbar fixed at the top, full width */
+/* Topbar fixed at the top, full width — purely a backdrop */
 .topbar {
 	position: fixed;
 	top: 0;
@@ -6,11 +6,26 @@
 	right: 0;
 	height: auto;
 	background: #fffff8;
-	/* border-bottom: 1px solid #ddd; */
+	border-bottom: 1px solid #ddd;
 	z-index: 1000;
+}
+
+/* Align topbar content with body by replicating its centering rules exactly */
+.topbar>span.h1 {
+	display: block;
 	width: 87.5%;
-	padding-left: 12.5%;
 	max-width: 1400px;
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: 12.5%;
+}
+
+@media (max-width: 760px) {
+	.topbar>span.h1 {
+		width: 84%;
+		padding-left: 8%;
+		padding-right: 8%;
+	}
 }
 
 /* top padding of article = h1 */
@@ -39,6 +54,11 @@ span.h1 {
 		background: #151515;
 		border-color: #333;
 	}
+
+	.popup {
+		background: #151515;
+		border-color: #333;
+	}
 }
 
 
@@ -52,72 +72,36 @@ p.h2subtitle {
 	line-height: 1;
 }
 
-/* for centering things horizontally */
-.center {
-	margin-left: auto;
-	margin-right: 0;
-}
-
 .popup-symbol {
 	font-style: normal;
 	/* font-family: sans-serif; */
 }
 
-.latex-table {
-	border-collapse: collapse;
-	/* no spacing between cells */
-	border-spacing: 0;
-
-
-	font-size: 1rem;
-	margin-bottom: 1.5rem;
-	text-align: center;
-	/* center all cells */
-}
-
-.latex-table th,
-.latex-table td {
-	padding: 0.2rem 0.4rem;
-	/* reduced padding */
-	text-align: center;
-	/* center content */
-	/* border: 0 none !important; */
-	/* remove all borders */
-}
-
-/* .latex-table th {
-	border-top: 1px solid #111;
-	border-bottom: 1px solid #111;
-} */
-
 .popup-trigger {
-    cursor: help;      /* question mark cursor */
-    display: inline-block;
-    font-weight: bold;
+	cursor: help;
+	/* question mark cursor */
+	display: inline-block;
+	font-weight: bold;
 }
 
 .popup {
-    background: #fffff8;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.15);
-    position: absolute;
-    z-index: 9999;
-    display: none;     /* hidden by default */
-
-}
-
-.popup:hover {
-    display: block;    /* remain visible if mouse enters popup */
+	background: #fffff8;
+	border: 1px solid #ccc;
+	border-radius: 0.5rem;
+	padding: 0.75rem;
+	box-shadow: inset 0 0.0625rem 0.1875rem rgba(0, 0, 0, 0.1), 0 0.25rem 0.625rem rgba(0, 0, 0, 0.15);
+	position: absolute;
+	z-index: 9999;
+	display: none;
+	/* hidden by default, controlled by script.js */
 }
 
 .popup-auto-size {
-	display: block;       
-    padding: 1px 10px !important;
+	display: block;
+	padding: 0.0625rem 0.625rem !important;
 }
 
 .popup-auto-size p {
-    margin: 0;
+	margin: 0;
 	font-size: 1rem;
 }
