@@ -152,19 +152,19 @@
       "cover_url": "https://covers.openlibrary.org/b/id/11200092-M.jpg"
     }
   },
-  "OL31088394W": {
+  "OL088394W": {
     "query": "9781982141172",
     "review_date": "2026-04-26",
     "proposer": "Arne",
     "ratings": {
-      "Thomas": null,
-      "Joost": null,
-      "Arne": null
-    },
-    "reviews": {
       "Thomas": 13,
       "Joost": 12,
       "Arne": 11
+    },
+    "reviews": {
+      "Thomas": null,
+      "Joost": null,
+      "Arne": null
     },
     "meta": {
       "key": "/works/OL31088394W",
