@@ -16,8 +16,10 @@ def build_summary(
     review: str,
     warnings: list[str],
     notices: list[str],
+    success: bool,
 ) -> str:
     lines = ["# SUMMARY"]
+    lines.append("✅ **Review saved**" if success else "❌ **Review not saved**")
     lines.append(f"book id: {book_id}")
     lines.append(f"reviewer: {reviewer}")
     lines.append(f"review: {review}")
@@ -70,17 +72,20 @@ def parse_issue():
             warnings=warnings,
         ) or failed
 
+    success = not failed
+
     summary = build_summary(
         book_id=book_id,
         reviewer=reviewer,
         review=review,
         warnings=warnings,
         notices=notices,
+        success=success,
     )
 
     post_summary(summary)
 
-    if failed:
+    if not success:
         return False
 
     book["reviews"][reviewer] = review

@@ -24,8 +24,10 @@ def build_summary(
     grade: str,
     warnings: list[str],
     notices: list[str],
+    success: bool,
 ) -> str:
     lines = ["# SUMMARY"]
+    lines.append("✅ **Rating saved**" if success else "❌ **Rating not saved**")
     lines.append(f"book id: {book_id}")
     lines.append(f"reviewer: {reviewer}")
     lines.append(f"grade: {grade}")
@@ -80,17 +82,20 @@ def parse_issue():
 
     parsed_grade = validate_grade(grade, warnings)
 
+    success = not failed and parsed_grade is not None
+
     summary = build_summary(
         book_id=book_id,
         reviewer=reviewer,
         grade=grade,
         warnings=warnings,
         notices=notices,
+        success=success,
     )
 
     post_summary(summary)
 
-    if failed or parsed_grade is None:
+    if not success:
         return False
 
     book["ratings"][reviewer] = parsed_grade
