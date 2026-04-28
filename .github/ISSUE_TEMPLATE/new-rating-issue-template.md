@@ -9,6 +9,9 @@ assignees: ''
 
 Upon finding a book with the provided ID in the books database and if the provided reviewer is a participant for this book, the grade is inserted accordingly.
 
+> [!WARNING]
+> Submitting a rating for a reviewer who has already rated this book will **overwrite** the existing grade without warning.
+
 ---
 
 # Rating

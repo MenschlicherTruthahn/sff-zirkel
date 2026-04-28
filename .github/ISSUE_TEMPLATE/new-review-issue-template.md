@@ -9,6 +9,9 @@ assignees: ''
 
 Upon finding a book with the provided ID in the books database and if the provided reviewer is a participant for this book, the review text is inserted accordingly.
 
+> [!WARNING]
+> Submitting a review for a reviewer who has already reviewed this book will **overwrite** the existing review without warning.
+
 ---
 
 # Review

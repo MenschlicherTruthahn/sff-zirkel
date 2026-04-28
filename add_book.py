@@ -144,7 +144,7 @@ def download_cover(url: str, out_path: Path):
     print(f"Saved cover to {out_path}")
 
 
-def fetch_openlibrary_metadata(query: str, books: dict) -> dict:
+def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
 
     existing_queries = [book["query"] for book in books.values()]
     existing_work_keys = [book["meta"]["key"] for book in books.values()]
@@ -168,12 +168,12 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict:
         "cover_i",
     ]
     # %%
-    params = {"q": query, "limit": LIMIT, "sorts": "editions", "fields": fields}
+    params = {"q": query, "limit": LIMIT, "fields": fields}
 
     # do not run the same query twice
     if query in existing_queries:
         WARNINGS.append(warn(f"The query `{query}` was already queried — skipping."))
-        return False
+        return None
 
     response = requests.get(
         f"{OPEN_LIBRARY_URL}/search.json",
@@ -189,7 +189,7 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict:
     # check if we found a book (numFound > 0)
     if not response_data.get("numFound", False):
         WARNINGS.append(warn(f"No results found on OpenLibrary for query `{query}`."))
-        return False
+        return None
 
     if response_data["numFound"] > 1:
         WARNINGS.append(
@@ -198,7 +198,7 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict:
             )
         )
 
-    # data is in the docs attribute (we sorted by edition count in the query -> first entry has most editions)
+    # data is in the docs attribute (sorted by relevance -> first entry is best match)
     response_data = response_data["docs"][0]
 
     for field in fields:
@@ -215,7 +215,7 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict:
                 f"A work with key `{work_id}` ({next(((item['meta']['title'], item['id']) for item in books.values() if item.get('meta', {}).get('key') == work_id), None)}) already exists — skipping."
             )
         )
-        return False
+        return None
 
     cover_path = ""
     cover_url = ""
@@ -237,7 +237,7 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict:
         "authors": join_and(response_data.get("author_name", [""])),
         "first_publish_year": response_data.get("first_publish_year", ""),
         "first_edition": response_data.get("first_edition", ""),
-        "number_of_pages_median": response_data.get("number_of_pages_median", ""),
+        "number_of_pages_median": response_data.get("number_of_pages_median", None),
         "first_sentence": response_data.get("first_sentence", [""])[0],
         "description": response_data.get("description", ""),
         "subjects": ", ".join(
