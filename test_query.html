@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Test Query</title>
+    <link rel="stylesheet" href="css/tufte.css">
+    <link rel="stylesheet" href="css/tufte-extension.css">
+    <style>
+        .query-form {
+            display: flex;
+            gap: 0.75rem;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .query-form input[type="text"] {
+            font-family: inherit;
+            font-size: 1.4rem;
+            padding: 0.3rem 0.6rem;
+            border: 1px solid #ccc;
+            background: #fffff8;
+            color: inherit;
+            flex: 1 1 20rem;
+            min-width: 0;
+        }
+
+        .query-form button {
+            font-family: inherit;
+            font-size: 1.4rem;
+            padding: 0.3rem 1rem;
+            border: 1px solid #ccc;
+            background: #fffff8;
+            color: inherit;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .query-form button:hover {
+            background: #eee;
+        }
+
+        #query-url {
+            font-size: 1.2rem;
+            word-break: break-all;
+            margin-bottom: 2rem;
+            color: #555;
+        }
+
+        #query-url a {
+            color: inherit;
+        }
+
+        .result-card {
+            border: 1px solid #ddd;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-card h3 {
+            margin-top: 0;
+            margin-bottom: 0.4rem;
+        }
+
+        .result-card .meta-grid {
+            display: grid;
+            grid-template-columns: max-content 1fr;
+            gap: 0.1rem 1rem;
+            font-size: 1.2rem;
+        }
+
+        .result-card .meta-grid dt {
+            color: #777;
+            font-style: italic;
+        }
+
+        .result-card .meta-grid dd {
+            margin: 0;
+        }
+
+        .result-card .cover {
+            float: right;
+            margin: 0 0 0.5rem 1rem;
+            max-width: 80px;
+        }
+
+        .result-card .cover img {
+            display: block;
+            max-width: 100%;
+        }
+
+        .badge-first {
+            display: inline-block;
+            font-size: 1rem;
+            background: #444;
+            color: #fff;
+            padding: 0.1rem 0.5rem;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+        }
+
+        #status {
+            font-style: italic;
+            color: #777;
+            margin-bottom: 1.5rem;
+        }
+
+        #results-count {
+            margin-bottom: 1rem;
+        }
+
+        /* Tufte body has padding-left: 12.5% but no matching right padding between 760px–1600px.
+           Add it to article so full-width content blocks don't run flush to the viewport edge. */
+        article {
+            padding-right: 12.5%;
+        }
+
+        @media (max-width: 760px) {
+
+            /* Below 760px tufte.css already adds padding-right: 8% to body, so reset here. */
+            article {
+                padding-right: 0;
+            }
+        }
+
+        @media (prefers-color-scheme: dark) {
+
+            .query-form input[type="text"],
+            .query-form button {
+                background: #151515;
+                border-color: #444;
+            }
+
+            .query-form button:hover {
+                background: #222;
+            }
+
+            .result-card {
+                border-color: #333;
+            }
+
+            #query-url {
+                color: #aaa;
+            }
+
+            #query-url a {
+                color: inherit;
+            }
+
+            .badge-first {
+                background: #aaa;
+                color: #151515;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header id="header" class="topbar">
+        <span class="h1">Test Query</span>
+    </header>
+
+    <article>
+        <section>
+            <p>
+                Runs the same OpenLibrary search query that the <code>add_book</code> pipeline would execute.
+                Enter an ISBN or a book title below.
+            </p>
+
+            <form class="query-form" id="form">
+                <input type="text" id="query-input" placeholder="e.g. 9781035045686 or The Blacktongue Thief"
+                    autocomplete="off" />
+                <button type="submit">Search</button>
+            </form>
+
+            <p id="query-url" hidden></p>
+            <p id="status" hidden></p>
+            <p id="results-count" hidden></p>
+            <div id="results"></div>
+        </section>
+    </article>
+
+    <footer class="bottombar"></footer>
+
+    <script>
+        const OPEN_LIBRARY_URL = "https://openlibrary.org";
+        const LIMIT = 10;
+        const FIELDS = [
+            "key", "type", "title", "author_name", "first_publish_year",
+            "first_edition", "number_of_pages_median", "first_sentence",
+            "description", "subject", "edition_count", "id_wikidata",
+            "place", "time", "cover_i",
+        ];
+
+        const form = document.getElementById("form");
+        const input = document.getElementById("query-input");
+        const queryUrlEl = document.getElementById("query-url");
+        const statusEl = document.getElementById("status");
+        const resultsCountEl = document.getElementById("results-count");
+        const resultsEl = document.getElementById("results");
+
+        // Pre-fill from URL param ?q=...
+        const urlParams = new URLSearchParams(location.search);
+        if (urlParams.has("q")) {
+            input.value = urlParams.get("q");
+            runQuery(input.value.trim());
+        }
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const query = input.value.trim();
+            if (!query) return;
+            // Update URL param without reloading
+            history.replaceState(null, "", "?q=" + encodeURIComponent(query));
+            runQuery(query);
+        });
+
+        async function runQuery(query) {
+            resultsEl.innerHTML = "";
+            resultsCountEl.hidden = true;
+            statusEl.hidden = false;
+            statusEl.textContent = "Searching…";
+
+            const params = new URLSearchParams({
+                q: query,
+                limit: LIMIT,
+                fields: FIELDS.join(","),
+            });
+            const url = `${OPEN_LIBRARY_URL}/search.json?${params}`;
+
+            queryUrlEl.hidden = false;
+            queryUrlEl.innerHTML = `Query URL: <a href="${url}" target="_blank" rel="noopener">${url}</a>`;
+
+            let data;
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                data = await resp.json();
+            } catch (err) {
+                statusEl.textContent = `Error: ${err.message}`;
+                return;
+            }
+
+            const numFound = data.numFound ?? 0;
+            const docs = data.docs ?? [];
+
+            if (numFound === 0) {
+                statusEl.textContent = "No results found.";
+                return;
+            }
+
+            statusEl.hidden = true;
+            resultsCountEl.hidden = false;
+            resultsCountEl.textContent =
+                `${numFound} result${numFound !== 1 ? "s" : ""} found — showing top ${docs.length}.`;
+
+            docs.forEach((doc, i) => renderCard(doc, i));
+        }
+
+        function renderCard(doc, index) {
+            const card = document.createElement("div");
+            card.className = "result-card";
+
+            const title = esc(doc.title ?? "(no title)");
+            const authors = Array.isArray(doc.author_name)
+                ? esc(doc.author_name.join(", "))
+                : "—";
+
+            const coverHtml = doc.cover_i
+                ? `<div class="cover"><img src="https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg" alt="Cover" loading="lazy"></div>`
+                : "";
+
+            const firstBadge = index === 0
+                ? `<span class="badge-first">pipeline picks this</span>`
+                : "";
+
+            const workKey = doc.key ?? "";
+            const workUrl = workKey ? `${OPEN_LIBRARY_URL}${workKey}` : null;
+            const titleHtml = workUrl
+                ? `<a href="${workUrl}" target="_blank" rel="noopener">${title}</a>`
+                : title;
+
+            const rows = [
+                ["Authors", authors],
+                ["First published", doc.first_publish_year ?? "—"],
+                ["Editions", doc.edition_count ?? "—"],
+                ["Pages (median)", doc.number_of_pages_median ?? "—"],
+                ["Work key", workKey ? `<code>${esc(workKey)}</code>` : "—"],
+                ["Subjects", Array.isArray(doc.subject)
+                    ? esc(doc.subject.slice(0, 8).join(", ")) + (doc.subject.length > 8 ? ` …(${doc.subject.length} total)` : "")
+                    : "—"],
+                ["First sentence", Array.isArray(doc.first_sentence)
+                    ? esc(doc.first_sentence[0])
+                    : (doc.first_sentence ? esc(String(doc.first_sentence)) : "—")],
+            ];
+
+            const gridHtml = rows
+                .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`)
+                .join("");
+
+            card.innerHTML = `
+                ${coverHtml}
+                <h3>${titleHtml}${firstBadge}</h3>
+                <dl class="meta-grid">${gridHtml}</dl>
+                <div style="clear:both"></div>
+            `;
+
+            resultsEl.appendChild(card);
+        }
+
+        function esc(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        }
+    </script>
+</body>
+
+</html>
