@@ -23,7 +23,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Metadata** — default values are ignored. Leave fields unchanged if you don't know them yet.
+        **Metadata**.
 
   - type: input
     id: review-date

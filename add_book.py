@@ -399,25 +399,6 @@ def parse_issue():
     guests_raw = extract_field(body, "guests")
 
     # -------------------------------
-    # Detect placeholder / defaults
-    # -------------------------------
-    defaults = {
-        "review date": "YYYY-MM-DD",
-        "proposer": "namehere",
-        "guests": "namehere, namehere, namehere",
-    }
-
-    if review_date == defaults["review date"]:
-        WARNINGS.append(warn(("Review date is still placeholder (`YYYY-MM-DD`).")))
-
-    if proposer == defaults["proposer"]:
-        WARNINGS.append(warn(("Proposer is still placeholder (`namehere`).")))
-
-    if guests_raw == defaults["guests"]:
-        WARNINGS.append(warn(("Guests are still placeholder, not adding guests.")))
-        guests_raw = ""
-
-    # -------------------------------
     # Date validation (non-fatal)
     # -------------------------------
     if review_date:
