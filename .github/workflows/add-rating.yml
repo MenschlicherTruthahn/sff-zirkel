@@ -85,4 +85,14 @@ jobs:
             --base main \
             --title "Add rating from issue #${{ github.event.issue.number }}" \
             --body "Handles #${{ github.event.issue.number }}" \
-            --label "automated"
+            --label "automated" || true
+
+      - name: Merge PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr merge "add-rating-issue-${{ github.event.issue.number }}" \
+            --admin \
+            --squash \
+            --delete-branch \
+            --subject "Add rating from issue #${{ github.event.issue.number }}" || true
