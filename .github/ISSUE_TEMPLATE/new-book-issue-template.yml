@@ -1,0 +1,45 @@
+name: Add new book
+description: Issue to create a new database record for the book database.
+title: "Add new book: enter-book-title-here"
+labels: ["book"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Upon finding a valid **ISBN**, opening this issue will generate a new database entry for the book by querying https://openlibrary.org/ for metadata. You may fill in the review-related metadata fields below — if you leave them at their defaults, they are created empty and can be filled later.
+
+        > [!IMPORTANT]
+        > Before opening this issue, use the [Query Test page](https://rue-a.github.io/sff-zirkel/test_query.html) to preview which book OpenLibrary would select for your ISBN or title query.
+
+  - type: input
+    id: isbn
+    attributes:
+      label: ISBN
+      description: ISBN or title query. For title queries it is strongly recommended to use the test query page beforehand.
+      placeholder: "e.g. 9781234567890"
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Metadata** — default values are ignored. Leave fields unchanged if you don't know them yet.
+
+  - type: input
+    id: review-date
+    attributes:
+      label: review date
+      placeholder: YYYY-MM-DD
+
+  - type: input
+    id: proposer
+    attributes:
+      label: proposer
+      placeholder: namehere
+
+  - type: input
+    id: guests
+    attributes:
+      label: guests
+      description: "Guests are participants that are not permanent members (see `data/club.json`). Permanent members are added automatically."
+      placeholder: "namehere, namehere"
