@@ -1,7 +1,7 @@
 ---
 name: Review book
 about: Issue to add a written review to a book existing in the books database.
-title: enter-review-title-here
+title: "Add review to book: enter-book-title-here"
 labels: review
 assignees: ''
 

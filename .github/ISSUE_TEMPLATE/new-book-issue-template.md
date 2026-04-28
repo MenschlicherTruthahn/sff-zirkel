@@ -1,7 +1,7 @@
 ---
 name: Add new book
 about: Issue to create a new database record for the book database.
-title: enter-book-title-here
+title: "Add new book: enter-book-title-here"
 labels: book
 assignees: ''
 

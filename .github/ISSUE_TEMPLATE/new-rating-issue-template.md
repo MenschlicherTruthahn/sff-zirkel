@@ -1,7 +1,7 @@
 ---
 name: Rate book
 about: Issue to add a rating to a book existing in the books database.
-title: enter-rating-title-here
+title: "Add rating to book: enter-book-title-here"
 labels: rating
 assignees: ''
 
