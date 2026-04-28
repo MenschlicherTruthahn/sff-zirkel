@@ -19,20 +19,20 @@ const points2grade = {
 
 // Returns the average of all ratings of all books rated by all readers. It returns a grade between 1+ and 6.
 function averageOfAllRatings(books) {
-  let sum = 0;
-  let count = 0;
+	let sum = 0;
+	let count = 0;
 
-  books.forEach(book => {
-    const bookRatings = Object.values(book.ratings);
-	if(ratings(book.ratings, book.meta.title)) {
-		bookRatings.forEach(r => {
-			sum += r;
-			count++;
-    	});
-	}
-  });
+	books.forEach(book => {
+		const bookRatings = Object.values(book.ratings);
+		if (ratings(book.ratings, book.meta.title)) {
+			bookRatings.forEach(r => {
+				sum += r;
+				count++;
+			});
+		}
+	});
 
-  return points2grade[Math.round(sum / count)];
+	return points2grade[Math.round(sum / count)];
 }
 
 
@@ -269,24 +269,49 @@ function renderBook(book, club, gradingPopup, averageGradePopup, averageGrade) {
 		section.appendChild(rating_p);
 
 
-		addPopup(popupTrigger, gradingPopup); 
+		addPopup(popupTrigger, gradingPopup);
 		addPopup(grade, averageGradePopup)
 	}
 
 	if (reviews(book.reviews, book.meta.title)) {
 		for (let key of Object.keys(book.reviews)) {
 			if (book.reviews[key]) {
-				const review_p = document.createElement("p")
-				const reviewer = document.createElement("span")
-				reviewer.textContent = key
-				reviewer.style.fontWeight = "bold"
-				reviewer.style.marginRight = "1em"
-				review_p.append(reviewer)
-				const review = document.createElement("span")
-				review.textContent = book.reviews[key]
-				review.style.fontStyle = "italic"
-				review_p.append(review)
-				section.appendChild(review_p)
+				const stripMarkdown = (text) => text
+					.replace(/\*\*(.+?)\*\*/g, '$1')   // bold **
+					.replace(/__(.+?)__/g, '$1')        // bold __
+					.replace(/\*(.+?)\*/g, '$1')        // italic *
+					.replace(/_(.+?)_/g, '$1')          // italic _
+					.replace(/~~(.+?)~~/g, '$1')        // strikethrough
+					.replace(/`(.+?)`/g, '$1')          // inline code
+					.replace(/^#{1,6}\s+/gm, '')        // headings
+					.replace(/^[-*+]\s+/gm, '')         // unordered list markers
+					.replace(/^\d+\.\s+/gm, '')         // ordered list markers
+					.replace(/\[(.+?)\]\(.*?\)/g, '$1') // links
+					.replace(/!\[.*?\]\(.*?\)/g, '');   // images
+				const review_p = document.createElement("p");
+				const reviewer = document.createElement("span");
+				reviewer.textContent = key;
+				reviewer.style.fontWeight = "bold";
+				reviewer.style.marginRight = "1em";
+				review_p.append(reviewer);
+				const lines = stripMarkdown(book.reviews[key].trim())
+					.replace(/\n+/g, "\n")
+					.split("\n");
+				lines.forEach((line, i) => {
+					if (i > 0) {
+						review_p.append(document.createElement("br"));
+						const indent = document.createElement("span");
+						indent.style.display = "inline-block";
+						indent.style.marginTop = "1pt";
+						indent.style.textIndent = "1em";
+						indent.textContent = line;
+						review_p.append(indent);
+					} else {
+						review_p.append(document.createTextNode(line));
+					}
+				});
+				review_p.style.fontStyle = "italic";
+				section.appendChild(review_p);
 			}
 		}
 	}

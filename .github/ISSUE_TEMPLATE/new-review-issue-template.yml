@@ -32,7 +32,7 @@ body:
     id: review
     attributes:
       label: review
-      description: Your written review of the book. Multiple paragraphs are supported.
+      description: "Your written review of the book. Separate paragraphs with a blank line. Note: markdown formatting (bold, italic, etc.) will be stripped when displayed."
       placeholder: Enter your review here…
     validations:
       required: true
