@@ -20,6 +20,9 @@ Upon finding a valid **ISBN**, opening this issue will generate a new database e
 
 # Metadata
 
+> [!TIP]
+> Default field values are ignored. E.g., if there are no guests or you don't know the review date yet, just leave everyhting as it is.
+
 - review date: `YYYY-MM-DD`
 - proposer: `namehere`
-- guests: `namehere, namehere, namehere` (guests are participants that are not permanent members, see `data/club.json` for a list of permanent members)
+- guests: `namehere, namehere, namehere` (guests are participants that are not permanent members, see `data/club.json` for a list of permanent members. Permanent members are added automatically.)
