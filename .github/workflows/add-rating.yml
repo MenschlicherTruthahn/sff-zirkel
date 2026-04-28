@@ -92,7 +92,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr merge "add-rating-issue-${{ github.event.issue.number }}" \
-            --admin \
             --squash \
             --delete-branch \
             --subject "Add rating from issue #${{ github.event.issue.number }}" || true

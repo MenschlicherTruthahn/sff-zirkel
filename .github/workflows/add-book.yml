@@ -92,7 +92,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr merge "add-book-issue-${{ github.event.issue.number }}" \
-            --admin \
             --squash \
             --delete-branch \
             --subject "Add book from issue #${{ github.event.issue.number }}" || true
