@@ -13,7 +13,8 @@ jobs:
   add-review:
     if: |
       contains(github.event.issue.labels.*.name, 'review') &&
-      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
+      (github.event.action == 'opened' || github.event.changes.body != null)
 
     runs-on: ubuntu-latest
 
