@@ -6,21 +6,29 @@ from issue_ingestion import (
     validate_book,
     validate_reviewer,
 )
-from utilities import load_books, save_books
+from utilities import load_books, save_books, warn
+
+
+def validate_grade(grade: str, warnings: list[str]) -> int | None:
+    if not (grade.isdigit() and 1 <= int(grade) <= 15):
+        warnings.append(warn(f"Grade '{grade}' is not an integer between 1 and 15."))
+        return None
+
+    return int(grade)
 
 
 def build_summary(
     *,
     book_id: str,
     reviewer: str,
-    review: str,
+    grade: str,
     warnings: list[str],
     notices: list[str],
 ) -> str:
     lines = ["# SUMMARY"]
     lines.append(f"book id: {book_id}")
     lines.append(f"reviewer: {reviewer}")
-    lines.append(f"review: {review}")
+    lines.append(f"grade: {grade}")
 
     if warnings:
         lines.append("### Warnings")
@@ -41,8 +49,8 @@ def build_summary(
 
 def parse_issue():
     """
-    Parse GitHub issue payload and add a review.
-    Extracts book_id, reviewer, and review text from issue.
+    Parse GitHub issue payload and add a rating.
+    Extracts book_id, reviewer, and grade from issue.
     """
     warnings = []
     notices = []
@@ -50,10 +58,10 @@ def parse_issue():
     event = load_issue()
     body = event.get("issue", {}).get("body", "")
 
-    fields = extract_issue_fields(body, "book id", "reviewer", "review")
+    fields = extract_issue_fields(body, "book id", "reviewer", "grade")
     book_id = fields["book id"]
     reviewer = fields["reviewer"]
-    review = fields["review"]
+    grade = fields["grade"]
 
     books = load_books(BOOKS_FILE)
     book, failed = validate_book(
@@ -66,24 +74,26 @@ def parse_issue():
         failed = validate_reviewer(
             book=book,
             reviewer=reviewer,
-            participant_field="reviews",
+            participant_field="ratings",
             warnings=warnings,
         ) or failed
+
+    parsed_grade = validate_grade(grade, warnings)
 
     summary = build_summary(
         book_id=book_id,
         reviewer=reviewer,
-        review=review,
+        grade=grade,
         warnings=warnings,
         notices=notices,
     )
 
     post_summary(summary)
 
-    if failed:
+    if failed or parsed_grade is None:
         return False
 
-    book["reviews"][reviewer] = review
+    book["ratings"][reviewer] = parsed_grade
 
     save_books(BOOKS_FILE, books)
 
