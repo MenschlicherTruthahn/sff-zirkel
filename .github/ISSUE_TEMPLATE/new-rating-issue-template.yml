@@ -14,7 +14,7 @@ body:
   - type: input
     id: book-id
     attributes:
-      label: book id
+      label: Book ID
       description: "OpenLibrary key: begins with `OL` and ends with `W`, find it on the right below the cover at https://rue-a.github.io/sff-zirkel/"
       placeholder: OL...W
     validations:
@@ -23,7 +23,7 @@ body:
   - type: input
     id: reviewer
     attributes:
-      label: reviewer
+      label: Reviewer
       placeholder: enter-reviewer-name-here
     validations:
       required: true
@@ -31,8 +31,8 @@ body:
   - type: input
     id: rating
     attributes:
-      label: rating
-      description: A value according to your rating scheme (integer from 1 to 15).
+      label: Rating
+      description: A value according to your rating scheme.
       placeholder: "e.g. 12"
     validations:
       required: true

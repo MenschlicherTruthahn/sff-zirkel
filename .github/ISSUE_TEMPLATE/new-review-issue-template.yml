@@ -14,7 +14,7 @@ body:
   - type: input
     id: book-id
     attributes:
-      label: book id
+      label: Book ID
       description: "OpenLibrary key: begins with `OL` and ends with `W`, find it on the right below the cover at https://rue-a.github.io/sff-zirkel/"
       placeholder: OL...W
     validations:
@@ -23,7 +23,7 @@ body:
   - type: input
     id: reviewer
     attributes:
-      label: reviewer
+      label: Reviewer
       placeholder: enter-reviewer-name-here
     validations:
       required: true
@@ -31,7 +31,7 @@ body:
   - type: textarea
     id: review
     attributes:
-      label: review
+      label: Review
       description: "Your written review of the book. Separate paragraphs with a blank line. Note: markdown formatting (bold, italic, etc.) will be stripped when displayed."
       placeholder: Enter your review here…
     validations:

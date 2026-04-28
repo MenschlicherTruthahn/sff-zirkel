@@ -28,18 +28,18 @@ body:
   - type: input
     id: review-date
     attributes:
-      label: review date
+      label: Review date
       placeholder: YYYY-MM-DD
 
   - type: input
     id: proposer
     attributes:
-      label: proposer
+      label: Proposer
       placeholder: namehere
 
   - type: input
     id: guests
     attributes:
-      label: guests
+      label: Guests
       description: "Guests are participants that are not permanent members (see `data/club.json`). Permanent members are added automatically."
       placeholder: "namehere, namehere"
