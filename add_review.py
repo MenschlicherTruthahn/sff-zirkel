@@ -105,15 +105,16 @@ def parse_issue():
     # Date validation (non-fatal)
     # -------------------------------
     books = load_books(BOOKS_FILE)
+    book = books.get(book_id)
 
-    if not books.get(book_id, False):
+    if not book:
         WARNINGS.append(warn(f"Book id '{book_id}' not found! Exiting."))
         failed = True
 
-    if reviewer not in books[book_id]["reviews"].keys():
+    if book and reviewer not in book["reviews"].keys():
         WARNINGS.append(
             warn(
-                f"Reviewer '{reviewer}' was no participant ({join_and(books[book_id]['reviews'].keys())})."
+                f"Reviewer '{reviewer}' was no participant ({join_and(book['reviews'].keys())})."
             )
         )
         failed = True
@@ -141,8 +142,9 @@ def parse_issue():
     if failed:
         return False
 
-    books[book_id]["ratings"][reviewer] = grade
-    books[book_id]["reviews"][reviewer] = review
+    parsed_grade = int(grade)
+    book["ratings"][reviewer] = parsed_grade
+    book["reviews"][reviewer] = review
 
     save_books(BOOKS_FILE, books)
 

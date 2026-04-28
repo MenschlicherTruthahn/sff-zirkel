@@ -54,7 +54,7 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Run reveiw ingestion
+      - name: Run review ingestion
         env:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
