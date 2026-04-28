@@ -7,10 +7,10 @@ assignees: ''
 
 ---
 
-Upon finding a book with the provided ID in the books database and if the provided reviewer is a participant for this book, the grade is inserted accordingly.
+Upon finding a book with the provided ID in the books database and if the provided reviewer is a participant for this book, the rating is inserted accordingly.
 
 > [!WARNING]
-> Submitting a rating for a reviewer who has already rated this book will **overwrite** the existing grade without warning.
+> Submitting a rating for a reviewer who has already rated this book will **overwrite** the existing rating without warning.
 
 ---
 
@@ -18,4 +18,4 @@ Upon finding a book with the provided ID in the books database and if the provid
 
 - book id: `enter-book-id-here` (OpenLibrary key: begins with `OL` and ends with `W`, you find it on the right, below the cover of the book at https://rue-a.github.io/sff-zirkel/)
 - reviewer: `enter-reviewer-name-here`
-- grade: `enter-grade-here` (number from 1 to 15)
+- rating: `enter-rating-here` (a value according to your rating scheme)

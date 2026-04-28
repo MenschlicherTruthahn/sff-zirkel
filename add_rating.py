@@ -9,19 +9,19 @@ from issue_ingestion import (
 from utilities import load_books, save_books, warn
 
 
-def validate_grade(grade: str, warnings: list[str]) -> int | None:
-    if not (grade.isdigit() and 1 <= int(grade) <= 15):
-        warnings.append(warn(f"Grade '{grade}' is not an integer between 1 and 15."))
+def validate_rating(rating: str, warnings: list[str]) -> int | None:
+    if not (rating.isdigit() and 1 <= int(rating) <= 15):
+        warnings.append(warn(f"Rating '{rating}' is not an integer between 1 and 15."))
         return None
 
-    return int(grade)
+    return int(rating)
 
 
 def build_summary(
     *,
     book_id: str,
     reviewer: str,
-    grade: str,
+    rating: str,
     warnings: list[str],
     notices: list[str],
     success: bool,
@@ -30,7 +30,7 @@ def build_summary(
     lines.append("✅ **Rating saved**" if success else "❌ **Rating not saved**")
     lines.append(f"book id: {book_id}")
     lines.append(f"reviewer: {reviewer}")
-    lines.append(f"grade: {grade}")
+    lines.append(f"rating: {rating}")
 
     if warnings:
         lines.append("### Warnings")
@@ -52,7 +52,7 @@ def build_summary(
 def parse_issue():
     """
     Parse GitHub issue payload and add a rating.
-    Extracts book_id, reviewer, and grade from issue.
+    Extracts book_id, reviewer, and rating from issue.
     """
     warnings = []
     notices = []
@@ -60,10 +60,10 @@ def parse_issue():
     event = load_issue()
     body = event.get("issue", {}).get("body", "")
 
-    fields = extract_issue_fields(body, "book id", "reviewer", "grade")
+    fields = extract_issue_fields(body, "book id", "reviewer", "rating")
     book_id = fields["book id"]
     reviewer = fields["reviewer"]
-    grade = fields["grade"]
+    rating = fields["rating"]
 
     books = load_books(BOOKS_FILE)
     book, failed = validate_book(
@@ -80,14 +80,14 @@ def parse_issue():
             warnings=warnings,
         ) or failed
 
-    parsed_grade = validate_grade(grade, warnings)
+    parsed_rating = validate_rating(rating, warnings)
 
-    success = not failed and parsed_grade is not None
+    success = not failed and parsed_rating is not None
 
     summary = build_summary(
         book_id=book_id,
         reviewer=reviewer,
-        grade=grade,
+        rating=rating,
         warnings=warnings,
         notices=notices,
         success=success,
@@ -98,7 +98,7 @@ def parse_issue():
     if not success:
         return False
 
-    book["ratings"][reviewer] = parsed_grade
+    book["ratings"][reviewer] = parsed_rating
 
     save_books(BOOKS_FILE, books)
 
