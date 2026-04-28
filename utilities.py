@@ -27,9 +27,21 @@ def extract_field(body: str, field: str) -> str:
     - ISBN: `9781234567890`
     - review date: `2025-03-14`
     - proposer: `arne`
+
+    Also handles GitHub Issue Forms section format:
+    ### field label
+
+    value (possibly multi-line)
     """
+    # Backtick inline format (markdown template)
     pattern = rf"- {re.escape(field)}:\s*`([^`]*)`"
     match = re.search(pattern, body, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+
+    # Section heading format (GitHub Issue Forms)
+    pattern = rf"^### {re.escape(field)}\s*\n\n(.*?)(?:\n\n###|\Z)"
+    match = re.search(pattern, body, re.IGNORECASE | re.DOTALL | re.MULTILINE)
     return match.group(1).strip() if match else ""
 
 
