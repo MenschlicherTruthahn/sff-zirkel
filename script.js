@@ -58,7 +58,7 @@ function renderPage(club, books, rs, popupRatings, popupAverageGrade) {
 	});
 
 	// Footer
-	const footer = document.querySelector("footer.bottombar");
+	const footer = document.getElementById("footer");
 	if (club.github_repo) {
 		const repoSpan = document.createElement("span");
 		const repoLink = document.createElement("a");
