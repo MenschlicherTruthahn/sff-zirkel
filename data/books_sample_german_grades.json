@@ -1,0 +1,73 @@
+{
+	"OL00000001W": {
+		"query": "9780000000001",
+		"review_date": "2025-12-15",
+		"proposer": "Arne",
+		"ratings": {
+			"Arne": 13,
+			"Thomas": 11,
+			"Joost": 14
+		},
+		"reviews": {
+			"Arne": "A compelling debut — the worldbuilding is meticulous without ever weighing down the plot.",
+			"Thomas": "Solid, though I found the middle act slow. The ending redeemed it.",
+			"Joost": null
+		},
+		"meta": {
+			"key": "/works/OL00000001W",
+			"title": "Sample Novel A",
+			"authors": "Jane Author",
+			"cover_url": null,
+			"description": "A sample science fiction novel for testing the German grades rating system.",
+			"first_sentence": "It began, as most things do, with a mistake.",
+			"first_publish_year": 2021,
+			"edition_count": 4,
+			"number_of_pages_median": 320,
+			"subjects": [
+				"Science fiction",
+				"Space opera"
+			],
+			"place": [
+				"Mars",
+				"Europa"
+			],
+			"time": [
+				"22nd century"
+			],
+			"id_wikidata": []
+		}
+	},
+	"OL00000002W": {
+		"query": "9780000000002",
+		"review_date": "2026-06-01",
+		"proposer": "Thomas",
+		"ratings": {
+			"Arne": null,
+			"Thomas": null,
+			"Joost": null
+		},
+		"reviews": {
+			"Arne": null,
+			"Thomas": null,
+			"Joost": null
+		},
+		"meta": {
+			"key": "/works/OL00000002W",
+			"title": "Sample Novel B",
+			"authors": "John Writer",
+			"cover_url": null,
+			"description": "An upcoming read — review not yet submitted.",
+			"first_sentence": null,
+			"first_publish_year": 2023,
+			"edition_count": 2,
+			"number_of_pages_median": 410,
+			"subjects": [
+				"Fantasy",
+				"Secondary world"
+			],
+			"place": [],
+			"time": [],
+			"id_wikidata": []
+		}
+	}
+}

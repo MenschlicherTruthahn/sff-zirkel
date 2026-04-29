@@ -1,0 +1,71 @@
+{
+	"OL00000003W": {
+		"query": "9780000000003",
+		"review_date": "2025-12-15",
+		"proposer": "Arne",
+		"ratings": {
+			"Arne": 4.5,
+			"Thomas": 3.5,
+			"Joost": 5.0
+		},
+		"reviews": {
+			"Arne": "Beautifully written. One of the best books I read this year.",
+			"Thomas": "Enjoyable but slightly overlong. Good characters.",
+			"Joost": "An absolute masterpiece — I couldn't put it down."
+		},
+		"meta": {
+			"key": "/works/OL00000003W",
+			"title": "Sample Novel C",
+			"authors": "Marie Écrivaine",
+			"cover_url": null,
+			"description": "A sample science fiction novel for testing the five-star rating system.",
+			"first_sentence": "The stars looked different from the other side.",
+			"first_publish_year": 2022,
+			"edition_count": 3,
+			"number_of_pages_median": 280,
+			"subjects": [
+				"Science fiction",
+				"Near future"
+			],
+			"place": [
+				"Earth orbit"
+			],
+			"time": [
+				"2080s"
+			],
+			"id_wikidata": []
+		}
+	},
+	"OL00000004W": {
+		"query": "9780000000004",
+		"review_date": "2026-06-01",
+		"proposer": "Joost",
+		"ratings": {
+			"Arne": null,
+			"Thomas": null,
+			"Joost": null
+		},
+		"reviews": {
+			"Arne": null,
+			"Thomas": null,
+			"Joost": null
+		},
+		"meta": {
+			"key": "/works/OL00000004W",
+			"title": "Sample Novel D",
+			"authors": "Carlos Novelista",
+			"cover_url": null,
+			"description": "An upcoming read — review not yet submitted.",
+			"first_sentence": null,
+			"first_publish_year": 2024,
+			"edition_count": 1,
+			"number_of_pages_median": 350,
+			"subjects": [
+				"Speculative fiction"
+			],
+			"place": [],
+			"time": [],
+			"id_wikidata": []
+		}
+	}
+}

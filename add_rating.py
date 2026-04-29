@@ -6,15 +6,37 @@ from issue_ingestion import (
     validate_book,
     validate_reviewer,
 )
-from utilities import load_books, save_books, warn
+from utilities import load_books, load_club, save_books, warn
+
+CLUB_FILE = Path("data/club.json")
 
 
-def validate_rating(rating: str, warnings: list[str]) -> int | None:
-    if not (rating.isdigit() and 1 <= int(rating) <= 15):
-        warnings.append(warn(f"Rating '{rating}' is not an integer between 1 and 15."))
-        return None
+def validate_rating(rating: str, club: dict, warnings: list[str]):
+    system_type = club.get("rating_system_id", "german_grades")
 
-    return int(rating)
+    if system_type == "german_grades":
+        if not (rating.isdigit() and 1 <= int(rating) <= 15):
+            warnings.append(
+                warn(f"Rating '{rating}' is not an integer between 1 and 15.")
+            )
+            return None
+        return int(rating)
+
+    if system_type == "five_stars":
+        try:
+            value = float(rating)
+        except ValueError:
+            warnings.append(warn(f"Rating '{rating}' is not a valid number."))
+            return None
+        if not (0.5 <= value <= 5.0 and (value * 2) % 1 == 0):
+            warnings.append(
+                warn(f"Rating '{rating}' must be a multiple of 0.5 between 0.5 and 5.")
+            )
+            return None
+        return value
+
+    warnings.append(warn(f"Unknown rating system type '{system_type}'."))
+    return None
 
 
 def build_summary(
@@ -66,6 +88,7 @@ def parse_issue():
     rating = fields["rating"]
 
     books = load_books(BOOKS_FILE)
+    club = load_club(CLUB_FILE)
     book, failed = validate_book(
         books=books,
         book_id=book_id,
@@ -73,14 +96,17 @@ def parse_issue():
     )
 
     if book:
-        failed = validate_reviewer(
-            book=book,
-            reviewer=reviewer,
-            participant_field="ratings",
-            warnings=warnings,
-        ) or failed
+        failed = (
+            validate_reviewer(
+                book=book,
+                reviewer=reviewer,
+                participant_field="ratings",
+                warnings=warnings,
+            )
+            or failed
+        )
 
-    parsed_rating = validate_rating(rating, warnings)
+    parsed_rating = validate_rating(rating, club, warnings)
 
     success = not failed and parsed_rating is not None
 

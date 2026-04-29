@@ -1,53 +1,30 @@
-const points2grade = {
-	15: "1<sup>+</sup>",
-	14: "1",
-	13: "1<sup>−</sup>",
-	12: "2<sup>+</sup>",
-	11: "2",
-	10: "2<sup>−</sup>",
-	9: "3<sup>+</sup>",
-	8: "3",
-	7: "3<sup>−</sup>",
-	6: "4<sup>+</sup>",
-	5: "4",
-	4: "4<sup>−</sup>",
-	3: "5<sup>+</sup>",
-	2: "5",
-	1: "5<sup>−</sup>",
-	0: "6"
-};
+// Returns the formatted average across all fully-rated books.
+function averageOfAllRatings(books, rs) {
+	const allValues = books
+		.filter(book => ratings(book.ratings, book.meta.title, rs))
+		.flatMap(book => Object.values(book.ratings));
 
-// Returns the average of all ratings of all books rated by all readers. It returns a grade between 1+ and 6.
-function averageOfAllRatings(books) {
-	let sum = 0;
-	let count = 0;
+	if (allValues.length === 0) return "";
 
-	books.forEach(book => {
-		const bookRatings = Object.values(book.ratings);
-		if (ratings(book.ratings, book.meta.title)) {
-			bookRatings.forEach(r => {
-				sum += r;
-				count++;
-			});
-		}
-	});
-
-	return points2grade[Math.round(sum / count)];
+	return rs.format(rs.computeAverage(
+		Object.fromEntries(allValues.map((v, i) => [i, v]))
+	));
 }
 
 
 
-Promise.all([
-	fetch("data/club.json").then(r => r.json()),
-	fetch("data/books.json").then(r => r.json())
-])
-	.then(async ([club, books]) => {
-		const popupRatings = await fetch(club.rating_popup).then(r => r.text());
-		const popupAverageGrade = await fetch(club.average_grade_popup).then(r => r.text());
-		renderPage(club, Object.values(books), popupRatings, popupAverageGrade);
+fetch("data/club.json").then(r => r.json())
+	.then(async (club) => {
+		const [books, { ratingSystem }, popupRatings, popupAverageGrade] = await Promise.all([
+			fetch(club.books).then(r => r.json()),
+			import(`./rating_systems/${club.rating_system_id}.js`),
+			fetch(`html_snippets/rating_system_popup_${club.rating_system_id}.html`).then(r => r.text()),
+			fetch(`html_snippets/average_popup_${club.rating_system_id}.html`).then(r => r.text()),
+		]);
+		renderPage(club, Object.values(books), ratingSystem, popupRatings, popupAverageGrade);
 	});
 
-function renderPage(club, books, popupRatings, popupAverageGrade) {
+function renderPage(club, books, rs, popupRatings, popupAverageGrade) {
 	const popupRatingsHost = document.createElement("div");
 	popupRatingsHost.innerHTML = popupRatings;
 	const ratingsPopup = popupRatingsHost.firstElementChild;
@@ -62,7 +39,7 @@ function renderPage(club, books, popupRatings, popupAverageGrade) {
 	document.body.appendChild(averageGradePopup);
 
 	// Compute the average grade
-	const averageGrade = averageOfAllRatings(books);
+	const averageGrade = averageOfAllRatings(books, rs);
 	// And adapt the .html responsible for the popup which uses the average grade
 	const averageGradeValue = document.getElementById("averageGradeValue");
 	averageGradeValue.innerHTML = averageGrade;
@@ -77,13 +54,31 @@ function renderPage(club, books, popupRatings, popupAverageGrade) {
 	const article = document.getElementById("works");
 	const sortedBooks = sortBooksByReviewDate(books);
 	sortedBooks.forEach(book => {
-		article.appendChild(renderBook(book, club, ratingsPopup, averageGradePopup, averageGradeValue));
+		article.appendChild(renderBook(book, club, rs, ratingsPopup, averageGradePopup, averageGradeValue));
 	});
+
+	// Footer
+	const footer = document.querySelector("footer.bottombar");
+	if (club.github_repo) {
+		const repoSpan = document.createElement("span");
+		const repoLink = document.createElement("a");
+		repoLink.href = club.github_repo;
+		repoLink.textContent = club.github_repo.replace(/^https?:\/\//, "");
+		repoSpan.appendChild(repoLink);
+		footer.appendChild(repoSpan);
+	}
+
+
+	const ratingSystemTrigger = document.createElement("span");
+	ratingSystemTrigger.textContent = "rating system";
+	ratingSystemTrigger.className = "popup-trigger";
+	footer.appendChild(ratingSystemTrigger);
+	addPopup(ratingSystemTrigger, ratingsPopup);
 
 
 }
 
-function renderBook(book, club, gradingPopup, averageGradePopup, averageGrade) {
+function renderBook(book, club, rs, gradingPopup, averageGradePopup, averageGrade) {
 	console.log(`Printing book section for ${book.meta.title}`)
 
 	const section = document.createElement("section");
@@ -183,97 +178,77 @@ function renderBook(book, club, gradingPopup, averageGradePopup, averageGrade) {
 	// book review announcement
 	const now = new Date();
 	const review_date = new Date(book["review_date"])
-	const review_date_string = review_date.toLocaleDateString('en', { month: 'long', day: 'numeric', year: 'numeric' });
+	const lang = club.language || "en";
+	const review_date_string = review_date.toLocaleDateString(lang, { month: 'long', day: 'numeric', year: 'numeric' });
 
 
-
-	const review_title = document.createElement("h3");
-	review_title.textContent = "Review";
-	section.appendChild(review_title);
-
-
-	console.log(review_date)
 
 	if (isNaN(review_date.getTime())) {
 		const review_announcement_p = document.createElement("p")
 		review_announcement_p.textContent = `A review date has not yet been set for ${book.meta.title}.`;
 		section.appendChild(review_announcement_p)
-
-		// don't print ratings yet, exit function
 		return section
 	}
-
 
 	if (review_date > now) {
 		const review_announcement_p = document.createElement("p")
 		review_announcement_p.textContent = `${book.meta.title} will be reviewed on ${review_date_string}.`;
 		section.appendChild(review_announcement_p)
-
-
-		// don't print ratings yet, exit function
 		return section
 	}
 
+	// Optional blocks. Only print ratings and review after the review date
+	const hasRatings = ratings(book.ratings, book.meta.title, rs);
+	const hasReviews = reviews(book.reviews, book.meta.title);
 
+	if (hasRatings || hasReviews) {
+		const review_title = document.createElement("h3");
+		review_title.textContent = "Review";
+		section.appendChild(review_title);
+	}
 
-
-	// Optional blocks. Only print ratings and review after the review date	
-
-	if (ratings(book.ratings, book.meta.title)) {
-
-
-		// section.appendChild(review_title);
-
+	if (hasRatings) {
 		// Average rating
-		const average_rating =
-			Math.round(
-				Object.values(book.ratings).reduce((acc, val) => acc + val, 0) /
-				Object.values(book.ratings).length
-			);
+		const average_rating = rs.computeAverage(book.ratings);
 
-
-
-
-
-		// Create hover question mark
-		const popupTrigger = document.createElement("span");
-		popupTrigger.innerHTML = '<sup class=popup-symbol>?</sup>';
-		popupTrigger.className = "popup-trigger";
-		popupTrigger.style.cursor = "help";
-		popupTrigger.style.marginLeft = "2pt";
-		popupTrigger.style.color = 'lightgray'
-
-		// create grade
+		// create grade element
 		const grade = document.createElement("span");
-		grade.innerHTML = points2grade[average_rating]
-		grade.style.fontWeight = "bold"
-
+		grade.innerHTML = rs.format(average_rating);
+		grade.style.fontWeight = "bold";
 
 		const margin_ratings = document.createElement("span")
 		margin_ratings.className = "marginnote";
 		const metalines = [];
 
 		for (let key of Object.keys(book.ratings)) {
-			metalines.push(metaLine(key, points2grade[book.ratings[key]]));
+			metalines.push(metaLine(key, rs.format(book.ratings[key])));
 		}
 
 		margin_ratings.innerHTML = metalines.join("");
 
+		// Build review sentence from club template
+		const template = club.review_sentence ||
+			"On {{date}}, the {{club_name}} graded {{book}} with {{rating}}.";
+		const parts = template
+			.replace("{{date}}", "\x00DATE\x00")
+			.replace("{{club_name}}", "\x00CLUB\x00")
+			.replace("{{book}}", "\x00BOOK\x00")
+			.replace("{{rating}}", "\x00RATING\x00")
+			.split("\x00");
+
 		const rating_p = document.createElement("p");
 		rating_p.appendChild(margin_ratings);
-		rating_p.appendChild(document.createTextNode(`On ${review_date_string}, the ${club.name} graded`));
-		rating_p.appendChild(popupTrigger);
-		rating_p.appendChild(document.createTextNode(` ${book.meta.title} with a `));
-		rating_p.appendChild(grade);
-		rating_p.appendChild(document.createTextNode(`.`));
+		parts.forEach(part => {
+			if (part === "DATE") rating_p.appendChild(document.createTextNode(review_date_string));
+			else if (part === "CLUB") rating_p.appendChild(document.createTextNode(club.name));
+			else if (part === "BOOK") rating_p.appendChild(document.createTextNode(book.meta.title));
+			else if (part === "RATING") { rating_p.appendChild(grade); addPopup(grade, averageGradePopup); }
+			else if (part) rating_p.appendChild(document.createTextNode(part));
+		});
 		section.appendChild(rating_p);
-
-
-		addPopup(popupTrigger, gradingPopup);
-		addPopup(grade, averageGradePopup)
 	}
 
-	if (reviews(book.reviews, book.meta.title)) {
+	if (hasReviews) {
 		for (let key of Object.keys(book.reviews)) {
 			if (book.reviews[key]) {
 				const stripMarkdown = (text) => text
@@ -320,7 +295,6 @@ function renderBook(book, club, gradingPopup, averageGradePopup, averageGrade) {
 
 
 
-	console.log("")
 	return section;
 }
 
@@ -383,27 +357,24 @@ function join(v) {
 }
 
 
-function ratings(ratings, title) {
-	// check for ratings object with content
-	if (!ratings || Object.keys(ratings).length === 0) {
-		console.warn(`No ratings found (${title}).`)
-		return false; // no ratings, return null		
+function ratings(ratingsObj, title, rs) {
+	if (!ratingsObj || Object.keys(ratingsObj).length === 0) {
+		console.warn(`No ratings found (${title}).`);
+		return false;
 	}
 
-	// only print ratings if everyone has rated the book
-	for (let key of Object.keys(ratings)) {
-
-		if (!(ratings[key])) {
-			console.warn(`Not everyone has rated yet (${title}).`)
-			return false
+	// only show ratings if every member has submitted one
+	for (let key of Object.keys(ratingsObj)) {
+		if (ratingsObj[key] === null || ratingsObj[key] === undefined) {
+			console.warn(`Not everyone has rated yet (${title}).`);
+			return false;
 		}
-		if (!(Number.isInteger(ratings[key]))) {
-			console.warn(`Ratings contain non-integer values (${title}).`)
-			return false
+		if (!rs.isValid(ratingsObj[key])) {
+			console.warn(`Invalid rating value "${ratingsObj[key]}" (${title}).`);
+			return false;
 		}
-
 	}
-	return true
+	return true;
 }
 
 function reviews(reviews, title) {

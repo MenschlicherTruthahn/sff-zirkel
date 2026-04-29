@@ -6,6 +6,9 @@
 		"Arne"
 	],
 	"founding_date": "2025-12-02",
-	"rating_popup": "html_snippets/rating_popup.html",
-	"average_grade_popup": "html_snippets/average_grade_popup.html"
+	"github_repo": "https://github.com/rue-a/sff-zirkel",
+	"language": "en",
+	"review_sentence": "On {{date}}, the {{club_name}} graded {{book}} with a {{rating}}.",
+	"books": "data/books.json",
+	"rating_system_id": "german_grades"
 }
