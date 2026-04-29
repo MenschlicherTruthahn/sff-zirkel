@@ -4,7 +4,6 @@
 	top: 0;
 	left: 0;
 	right: 0;
-	height: auto;
 	background: #fffff8;
 	border-bottom: 1px solid #ddd;
 	z-index: 1000;
@@ -28,12 +27,6 @@
 	}
 }
 
-/* top padding of article = h1; bottom padding reserves space for fixed footer */
-article {
-	/* max topbar height = tufte h1 vertical space (4 + 1.5 + 3.2 rem) */
-	padding-top: 8.7rem;
-	padding-bottom: 3.5rem;
-}
 
 /* Footer bar fixed at the bottom, full width */
 .bottombar {
@@ -41,30 +34,46 @@ article {
 	bottom: 0;
 	left: 0;
 	right: 0;
-	height: auto;
 	background: #fffff8;
 	border-top: 1px solid #ddd;
 	z-index: 1000;
 	padding-top: 1rem;
 	padding-bottom: 1rem;
-	padding-left: max(17.1875%, calc(50% - 525px));
-	font-size: 0.9rem;
-	color: #666;
-	display: flex;
-	gap: 1.5rem;
-	align-items: center;
+
+
 }
 
-.bottombar a {
-	color: inherit;
+.bottombar>div {
+	display: block;
+	width: 87.5%;
+	max-width: 1400px;
+	margin-left: auto;
+	margin-right: auto;
+	padding-left: 12.5%;
 }
+
+
+
 
 @media (max-width: 760px) {
-	.bottombar {
+	.bottombar>div {
+		width: 84%;
 		padding-left: 8%;
 		padding-right: 8%;
 	}
 }
+
+
+
+/* top padding of article = h1; bottom padding reserves space for fixed footer */
+article {
+	/* max topbar height = tufte h1 vertical space (4 + 1.5 + 3.2 rem) */
+	padding-top: 8.7rem;
+	padding-bottom: 3.5rem;
+}
+
+
+
 
 
 /* create a span class with h1 properties of tufte css (so we don't use an h1 within header) */

@@ -60,7 +60,7 @@ function renderPage(club, books, rs, popupRatings, popupAverageGrade) {
 	// Footer
 	const footer = document.getElementById("footer");
 	if (club.github_repo) {
-		const repoSpan = document.createElement("span");
+		const repoSpan = document.createElement("div");
 		const repoLink = document.createElement("a");
 		repoLink.href = club.github_repo;
 		repoLink.textContent = club.github_repo.replace(/^https?:\/\//, "");
@@ -69,10 +69,12 @@ function renderPage(club, books, rs, popupRatings, popupAverageGrade) {
 	}
 
 
-	const ratingSystemTrigger = document.createElement("span");
+	const ratingSystemDiv = document.createElement("div");
+	const ratingSystemTrigger = document.createElement("span")
 	ratingSystemTrigger.textContent = "rating system";
 	ratingSystemTrigger.className = "popup-trigger";
-	footer.appendChild(ratingSystemTrigger);
+	ratingSystemDiv.appendChild(ratingSystemTrigger)
+	footer.appendChild(ratingSystemDiv);
 	addPopup(ratingSystemTrigger, ratingsPopup);
 
 
