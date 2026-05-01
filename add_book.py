@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+import time
 
 import requests
 
@@ -171,16 +172,22 @@ def fetch_openlibrary_metadata(
         warnings.append(warn(f"The query `{query}` was already queried — skipping."))
         return None
 
-    response = requests.get(
-        f"{OPEN_LIBRARY_URL}/search.json",
-        params=params,
-        timeout=10,
-    )
-    notices.append(notice(f"Querying: {query} (actual query URL: {response.url})"))
-
-    # raise_for_status() throws exception if request failed
-    response.raise_for_status()
-    response_data = response.json()
+    for attempt in range(1, 6):
+        response = requests.get(
+            f"{OPEN_LIBRARY_URL}/search.json",
+            params=params,
+            timeout=10,
+        )
+        notices.append(
+            notice(f"Querying: {query} (attempt {attempt}, URL: {response.url})")
+        )
+        response.raise_for_status()
+        response_data = response.json()
+        if response_data.get("numFound", 0):
+            break
+        if attempt < 5:
+            notices.append(notice(f"No results yet — retrying in 1 s…"))
+            time.sleep(1)
 
     # check if we found a book (numFound > 0)
     if not response_data.get("numFound", False):
