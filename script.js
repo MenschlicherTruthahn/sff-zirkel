@@ -183,9 +183,12 @@ function renderBook(book, club, rs, gradingPopup, averageGradePopup, averageGrad
 	const lang = club.language || "en";
 	const review_date_string = review_date.toLocaleDateString(lang, { month: 'long', day: 'numeric', year: 'numeric' });
 
+	const review_title = document.createElement("h3");
+	review_title.textContent = "Review";
+	section.appendChild(review_title);
 
 
-	if (isNaN(review_date.getTime())) {
+	if (!(review_date.getTime())) {
 		const review_announcement_p = document.createElement("p")
 		review_announcement_p.textContent = `A review date has not yet been set for ${book.meta.title}.`;
 		section.appendChild(review_announcement_p)
@@ -203,11 +206,7 @@ function renderBook(book, club, rs, gradingPopup, averageGradePopup, averageGrad
 	const hasRatings = ratings(book.ratings, book.meta.title, rs);
 	const hasReviews = reviews(book.reviews, book.meta.title);
 
-	if (hasRatings || hasReviews) {
-		const review_title = document.createElement("h3");
-		review_title.textContent = "Review";
-		section.appendChild(review_title);
-	}
+
 
 	if (hasRatings) {
 		// Average rating
