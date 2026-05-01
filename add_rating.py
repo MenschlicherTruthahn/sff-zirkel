@@ -1,5 +1,6 @@
 from issue_ingestion import (
     BOOKS_FILE,
+    CLUB_FILE,
     extract_issue_fields,
     load_issue,
     post_summary,
@@ -7,8 +8,6 @@ from issue_ingestion import (
     validate_reviewer,
 )
 from utilities import load_books, load_club, save_books, warn
-
-CLUB_FILE = Path("data/club.json")
 
 
 def validate_rating(rating: str, club: dict, warnings: list[str]):

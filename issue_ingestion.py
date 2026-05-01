@@ -7,6 +7,7 @@ from utilities import extract_field, join_and, post_issue_comment, warn
 
 
 BOOKS_FILE = Path("data/books.json")
+CLUB_FILE = Path("data/club.json")
 
 
 def load_issue() -> dict:
