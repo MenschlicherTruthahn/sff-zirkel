@@ -56,12 +56,16 @@ jobs:
           pip install -r requirements.txt
 
       - name: Run review ingestion
+        id: ingestion
+        continue-on-error: true
         env:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python add_review.py
 
       - name: Create branch and commit
+        id: commit
+        continue-on-error: true
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -77,6 +81,7 @@ jobs:
 
       - name: Create PR
         id: pr
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -88,10 +93,58 @@ jobs:
             --label "automated" || true
 
       - name: Merge PR
+        id: merge
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh pr merge "add-review-issue-${{ github.event.issue.number }}" \
             --squash \
             --delete-branch \
-            --subject "Add review from issue #${{ github.event.issue.number }}" || true
+            --subject "Add review from issue #${{ github.event.issue.number }}"
+
+      - name: Report
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const outcomes = {
+              ingestion: '${{ steps.ingestion.outcome }}',
+              commit:    '${{ steps.commit.outcome }}',
+              pr:        '${{ steps.pr.outcome }}',
+              merge:     '${{ steps.merge.outcome }}',
+            };
+            const success = outcomes.merge === 'success';
+
+            const icon = o => o === 'success' ? '✅' : o === 'skipped' ? '⏭️' : '❌';
+            const rows = [
+              ['Review ingestion', outcomes.ingestion],
+              ['Commit & push',    outcomes.commit],
+              ['Create PR',        outcomes.pr],
+              ['Merge PR',         outcomes.merge],
+            ].map(([s, o]) => `| ${s} | ${icon(o)} ${o} |`).join('\n');
+
+            const table = `| Step | Outcome |\n|---|---|\n${rows}`;
+            const heading = `## ${success ? '✅ Success' : '❌ Failure'}: Add review (issue #${{ github.event.issue.number }})`;
+
+            await core.summary.addRaw(`${heading}\n\n${table}`).write();
+
+            const comment = success
+              ? `✅ Review successfully added. The PR has been merged and the changes are live.`
+              : `❌ Failed to add review.\n\n${table}\n\nSee the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: ${{ github.event.issue.number }},
+              body: comment,
+            });
+
+            if (success) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo:  context.repo.repo,
+                issue_number: ${{ github.event.issue.number }},
+                state: 'closed',
+              });
+            }
