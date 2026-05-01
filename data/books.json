@@ -189,19 +189,17 @@
     },
     "OL44370085W": {
         "query": "OL44370085W",
-        "review_date": "_No response_",
+        "review_date": null,
         "proposer": "Arne",
         "ratings": {
             "Thomas": null,
             "Joost": null,
-            "Arne": null,
-            "_No Response_": null
+            "Arne": null
         },
         "reviews": {
             "Thomas": null,
             "Joost": null,
-            "Arne": null,
-            "_No Response_": null
+            "Arne": null
         },
         "meta": {
             "key": "/works/OL44370085W",

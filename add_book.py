@@ -277,8 +277,8 @@ def add_book(query, proposer, participants, review_date, warnings, notices):
 
         new_book = {
             "query": query,
-            "review_date": review_date,
-            "proposer": proposer.title(),
+            "review_date": review_date or None,
+            "proposer": proposer.title() if proposer else None,
             "ratings": ratings,
             "reviews": reviews,
             "meta": meta,

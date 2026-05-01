@@ -37,15 +37,21 @@ def extract_field(body: str, field: str) -> str:
     Supports two formats:
     - Backtick inline:  `- field: \`value\``
     - Issue Forms:      `### field\\n\\nvalue`
+
+    GitHub Forms emits "_No response_" for optional fields left blank — normalised to "".
     """
     pattern = rf"- {re.escape(field)}:\s*`([^`]*)`"
     match = re.search(pattern, body, re.IGNORECASE)
     if match:
-        return match.group(1).strip()
+        value = match.group(1).strip()
+        return "" if re.fullmatch(r"_no response_", value, re.IGNORECASE) else value
 
     pattern = rf"^### {re.escape(field)}\s*\n\n(.*?)(?:\n\n###|\Z)"
     match = re.search(pattern, body, re.IGNORECASE | re.DOTALL | re.MULTILINE)
-    return match.group(1).strip() if match else ""
+    if match:
+        value = match.group(1).strip()
+        return "" if re.fullmatch(r"_no response_", value, re.IGNORECASE) else value
+    return ""
 
 
 # ---------- Data I/O ----------
