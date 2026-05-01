@@ -1,12 +1,13 @@
 from issue_ingestion import (
     BOOKS_FILE,
     extract_issue_fields,
+    load_books,
     load_issue,
     post_summary,
+    save_books,
     validate_book,
     validate_reviewer,
 )
-from utilities import load_books, save_books
 
 
 def build_summary(
@@ -65,12 +66,15 @@ def parse_issue():
     )
 
     if book:
-        failed = validate_reviewer(
-            book=book,
-            reviewer=reviewer,
-            participant_field="reviews",
-            warnings=warnings,
-        ) or failed
+        failed = (
+            validate_reviewer(
+                book=book,
+                reviewer=reviewer,
+                participant_field="reviews",
+                warnings=warnings,
+            )
+            or failed
+        )
 
     success = not failed
 

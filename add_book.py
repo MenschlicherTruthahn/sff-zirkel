@@ -1,30 +1,24 @@
-# %%
-import json
-import re
-import os
 from datetime import datetime
 from pathlib import Path
-import uuid
 
 import requests
 
-from utilities import (
-    notice,
-    warn,
+from issue_ingestion import (
+    BOOKS_FILE,
+    CLUB_FILE,
+    extract_issue_fields,
     join_and,
-    extract_field,
     load_books,
     load_club,
+    load_issue,
+    notice,
+    post_summary,
     save_books,
-    post_issue_comment,
+    warn,
 )
 
 # ---------- Configuration ----------
-BOOKS_FILE = Path("data/books.json")
-CLUB_FILE = Path("data/club.json")
 COVERS_PATH = Path("covers")
-NOTICES = []
-WARNINGS = []
 
 OPEN_LIBRARY_URL = "https://openlibrary.org"
 LIMIT = 10
@@ -144,7 +138,9 @@ def download_cover(url: str, out_path: Path):
     print(f"Saved cover to {out_path}")
 
 
-def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
+def fetch_openlibrary_metadata(
+    query: str, books: dict, warnings: list, notices: list
+) -> dict | None:
 
     existing_queries = [book["query"] for book in books.values()]
     existing_work_keys = [book["meta"]["key"] for book in books.values()]
@@ -172,7 +168,7 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
 
     # do not run the same query twice
     if query in existing_queries:
-        WARNINGS.append(warn(f"The query `{query}` was already queried — skipping."))
+        warnings.append(warn(f"The query `{query}` was already queried — skipping."))
         return None
 
     response = requests.get(
@@ -180,7 +176,7 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
         params=params,
         timeout=10,
     )
-    NOTICES.append(notice((f"Querying: {query} (actual query URL: {response.url})")))
+    notices.append(notice(f"Querying: {query} (actual query URL: {response.url})"))
 
     # raise_for_status() throws exception if request failed
     response.raise_for_status()
@@ -188,11 +184,11 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
 
     # check if we found a book (numFound > 0)
     if not response_data.get("numFound", False):
-        WARNINGS.append(warn(f"No results found on OpenLibrary for query `{query}`."))
+        warnings.append(warn(f"No results found on OpenLibrary for query `{query}`."))
         return None
 
     if response_data["numFound"] > 1:
-        WARNINGS.append(
+        warnings.append(
             warn(
                 f"Result is ambigous, {response_data['numFound']} matches found. Selecting match with most editions."
             )
@@ -203,14 +199,14 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
 
     for field in fields:
         if field not in response_data.keys():
-            NOTICES.append(notice((f"The field `{field}` yielded no data")))
+            notices.append(notice(f"The field `{field}` yielded no data"))
 
     # in open library terms, a work is the sum of all editions
     work_id = response_data["key"]
 
     # Check for duplicates, stop if book already exists in db
     if work_id in existing_work_keys:
-        WARNINGS.append(
+        warnings.append(
             warn(
                 f"A work with key `{work_id}` ({next(((item['meta']['title'], item['id']) for item in books.values() if item.get('meta', {}).get('key') == work_id), None)}) already exists — skipping."
             )
@@ -228,7 +224,7 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
         # store cover at covers
         download_cover(cover_url, cover_path)
     else:
-        NOTICES.append(notice(("The query yielded no cover image")))
+        notices.append(notice("The query yielded no cover image"))
 
     stringified_data = {
         "key": response_data.get("key", ""),
@@ -258,11 +254,10 @@ def fetch_openlibrary_metadata(query: str, books: dict) -> dict | None:
     return stringified_data
 
 
-def add_book(isbn, proposer, participants, review_date):
+def add_book(query, proposer, participants, review_date, warnings, notices):
     books = load_books(BOOKS_FILE)
 
-    # Fetch metadata to validate ISBN exists
-    meta = fetch_openlibrary_metadata(isbn, books)
+    meta = fetch_openlibrary_metadata(query, books, warnings, notices)
 
     if meta:
         ratings = {
@@ -274,7 +269,7 @@ def add_book(isbn, proposer, participants, review_date):
         }
 
         new_book = {
-            "query": isbn,
+            "query": query,
             "review_date": review_date,
             "proposer": proposer.title(),
             "ratings": ratings,
@@ -285,7 +280,7 @@ def add_book(isbn, proposer, participants, review_date):
         # reuse Open Library work key as ID
         books[meta["key"].split("/")[-1]] = new_book
         save_books(BOOKS_FILE, books)
-        print(f"✔ Added book {isbn}")
+        print(f"✔ Added book {query}")
     return meta
 
 
@@ -298,57 +293,42 @@ def build_summary(
     meta: dict | None,
     warnings: list[str],
     notices: list[str],
+    success: bool,
 ) -> str:
-    """
-    Build a human-readable Markdown summary of what happened,
-    including warnings (if any).
-    """
-
     prepared = requests.Request(
         "GET", f"{OPEN_LIBRARY_URL}/search.json", params={"q": query, "limit": LIMIT}
     ).prepare()
     query_url = prepared.url
 
     lines = ["# SUMMARY"]
-    lines.append(f"**Query:** {query} ({query_url})\n\n")
+    lines.append(
+        "✅ **Book entry created**" if success else "❌ **No book entry created**"
+    )
+    lines.append(f"**Query:** {query} ({query_url})")
 
-    if not meta:
-        lines.append("❌ **No book entry created**\n")
-    else:
-        # Header
-        lines.append("✅ **Book entry created**\n")
-
-        # Core info
-
+    if meta:
         lines.append("## Metadata")
         lines.append("### Fetched Data")
-
         for key, val in meta.items():
             lines.append(f"**{key}:** {val}")
 
         lines.append("### Review Data")
         if review_date:
             lines.append(f"**Review date:** {review_date}")
-
         if proposer:
             lines.append(f"**Proposed by:** {proposer}")
-
         if participants:
             lines.append(f"**Participants:** {', '.join(participants)}")
 
-    # Warnings section
     if warnings:
         lines.append("### Warnings")
         lines.append("\n> [!WARNING]\n>")
-
         for w in warnings:
             lines.append(f"> - {w}")
 
-    # Warnings section
     if notices:
         lines.append("### Notes")
         lines.append("\n> [!NOTE]\n>")
-
         for n in notices:
             lines.append(f"> - {n}")
 
@@ -358,96 +338,65 @@ def build_summary(
 def parse_issue():
     """
     Parse GitHub issue payload and add a book entry.
-    Extracts ISBN from issue title and metadata from body.
-    Emits warnings for placeholder values and invalid dates.
     """
+    warnings = []
+    notices = []
 
-    event_path = Path(os.environ.get("GITHUB_EVENT_PATH", ""))
+    event = load_issue()
+    body = event.get("issue", {}).get("body", "")
 
-    if not event_path.exists():
-        raise RuntimeError(
-            "GITHUB_EVENT_PATH not found. Are you running in GitHub Actions?"
-        )
+    fields = extract_issue_fields(body, "query", "review date", "proposer", "guests")
+    query = fields["query"]
+    review_date = fields["review date"]
+    proposer = fields["proposer"]
+    guests_raw = fields["guests"]
 
-    with event_path.open("r", encoding="utf-8") as f:
-        event = json.load(f)
-
-    issue = event.get("issue", {})
-    title = issue.get("title", "").strip()
-    body = issue.get("body", "")
-
-    # -------------------------------
-    # ISBN from title
-    # -------------------------------
-    # Keep digits and X only (ISBN-10 or 13)
-    isbn = re.sub(r"[^0-9X]", "", extract_field(body, "ISBN"))
-    query = isbn
-
-    # if isbn is not valid, try with entered title
-    if len(query) not in (10, 13):
-        fallback = title.strip()
-        WARNINGS.append(
-            warn((f"No valid ISBN detected, trying issue title: `{fallback}`"))
-        )
-        query = fallback
-
-    # -------------------------------
-    # Metadata from body
-    # -------------------------------
-    review_date = extract_field(body, "review date")
-    proposer = extract_field(body, "proposer")
-    guests_raw = extract_field(body, "guests")
-
-    # -------------------------------
     # Date validation (non-fatal)
-    # -------------------------------
     if review_date:
         try:
             datetime.strptime(review_date, "%Y-%m-%d")
         except ValueError:
-            WARNINGS.append(
-                warn((f"Review date `{review_date}` is not in YYYY-MM-DD format."))
+            warnings.append(
+                warn(f"Review date `{review_date}` is not in YYYY-MM-DD format.")
             )
 
-    # -------------------------------
-    # Participants parsing
-    # -------------------------------
-
-    club_meta = load_club(CLUB_FILE)
-    participants = club_meta["permanent_members"] + [
+    # Participants
+    club = load_club(CLUB_FILE)
+    participants = club.get("permanent_members", []) + [
         p.strip() for p in guests_raw.split(",") if p.strip()
     ]
 
     if not participants:
-        WARNINGS.append(warn(("No participants specified.")))
+        warnings.append(warn("No participants specified."))
 
-    # -------------------------------
     # Add book
-    # -------------------------------
-    book_meta = add_book(
-        isbn=query,
+    meta = add_book(
+        query=query,
         proposer=proposer,
         participants=participants,
         review_date=review_date,
+        warnings=warnings,
+        notices=notices,
     )
+
+    success = meta is not None
 
     summary = build_summary(
         query=query,
         review_date=review_date,
         proposer=proposer,
         participants=participants,
-        meta=book_meta,
-        warnings=WARNINGS,
-        notices=NOTICES,
+        meta=meta,
+        warnings=warnings,
+        notices=notices,
+        success=success,
     )
 
-    post_issue_comment(summary)
-    print(f"::notice::{summary}")
+    post_summary(summary)
 
-    return bool(book_meta)
+    return success
 
 
 if __name__ == "__main__":
-    title_added = parse_issue()
-    # Exit code 1 if nothing was added (optional)
-    exit(0 if title_added else 1)
+    success = parse_issue()
+    exit(0 if success else 1)

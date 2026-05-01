@@ -6,17 +6,17 @@ body:
   - type: markdown
     attributes:
       value: |
-        Upon finding a valid **ISBN**, opening this issue will generate a new database entry for the book by querying https://openlibrary.org/ for metadata. You may fill in the review-related metadata fields below — if you leave them at their defaults, they are created empty and can be filled later.
+        Opening this issue will query https://openlibrary.org/ for a book and its metadata. Upon finding a valid book, it creates a new database entry for the book queried. You may fill in the review-related metadata fields below — if you leave them at their defaults, they are created empty and can be filled later. A good query is an ISBN, the Work-ID of the book at OpenLibrary or the title.
 
         > [!IMPORTANT]
-        > Before opening this issue, use the [Query Test page](https://rue-a.github.io/sff-zirkel/test_query.html) to preview which book OpenLibrary would select for your ISBN or title query.
+        > Before opening this issue, use the [Query Test page](https://rue-a.github.io/sff-zirkel/test_query.html) to preview which book OpenLibrary would select for your query.
 
   - type: input
-    id: isbn
+    id: query
     attributes:
-      label: ISBN
-      description: ISBN or title query. For title queries it is strongly recommended to use the test query page beforehand.
-      placeholder: "e.g. 9781234567890"
+      label: Query
+      description: Query. It is strongly recommended to use the test query page beforehand.
+      placeholder: "e.g. 9781234567890 or OL44370085W"
     validations:
       required: true
 
