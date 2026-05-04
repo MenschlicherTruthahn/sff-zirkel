@@ -1,6 +1,6 @@
 name: Review book from title
 description: Issue to add a written review to a book existing in the books database.
-title: "Add review to book: enter-book-title-here"
+title: "Add review to book from title"
 labels: ["review"]
 body:
   - type: markdown

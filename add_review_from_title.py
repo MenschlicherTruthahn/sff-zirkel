@@ -1,0 +1,112 @@
+from issue_ingestion import (
+    BOOKS_FILE,
+    extract_issue_fields,
+    load_books,
+    load_issue,
+    post_summary,
+    save_books,
+    validate_book,
+    validate_reviewer,
+)
+
+
+def build_summary(
+    *,
+    book_id: str,
+    reviewer: str,
+    review: str,
+    warnings: list[str],
+    notices: list[str],
+    success: bool,
+) -> str:
+    lines = ["# SUMMARY"]
+    lines.append("✅ **Review saved**" if success else "❌ **Review not saved**")
+    lines.append(f"book id: {book_id}")
+    lines.append(f"reviewer: {reviewer}")
+    lines.append(f"review: {review}")
+
+    if warnings:
+        lines.append("### Warnings")
+        lines.append("\n> [!WARNING]\n>")
+
+        for warning in warnings:
+            lines.append(f"> - {warning}")
+
+    if notices:
+        lines.append("### Notes")
+        lines.append("\n> [!NOTE]\n>")
+
+        for notice in notices:
+            lines.append(f"> - {notice}")
+
+    return "\n".join(lines)
+
+def get_book_id_from_title(books, title: str) -> str, bool:
+    matching_book_ids = [book_id for book_id, data in books.items() if data.get("meta", {}).get("title") == title]
+    if len(matching_book_ids) != 1:
+        return None, False
+    return matching_book_ids[0], True
+
+def parse_issue() -> bool:
+    """
+    Parse GitHub issue payload and add a review.
+    Extracts book_id, reviewer, and review text from issue.
+    """
+    warnings = []
+    notices = []
+
+    event = load_issue()
+    body = event.get("issue", {}).get("body", "")
+
+    fields = extract_issue_fields(body, "title", "reviewer", "review")
+    title = fields["title"]
+    reviewer = fields["reviewer"]
+    review = fields["review"]
+
+    books = load_books(BOOKS_FILE)
+    book_id, found_single_id = get_book_id_from_title(books, title)
+    if not found_single_id:
+        return False
+
+    book, _ = validate_book(
+        books=books,
+        book_id=book_id,
+        warnings=warnings,
+    )
+
+    success = False
+    if book: #if book already implies that validate_book returned False as a second value. In a clean version, validate_book does not return any bool
+        success = not
+            validate_reviewer(
+                book=book,
+                reviewer=reviewer,
+                participant_field="reviews",
+                warnings=warnings,
+            )
+    #success = book and not validate_reviewer (:..) # This is the clean version
+
+    summary = build_summary(
+        book_id=book_id,
+        reviewer=reviewer,
+        review=review,
+        warnings=warnings,
+        notices=notices,
+        success=success,
+    )
+
+    post_summary(summary)
+
+    if not success:
+        return False
+
+    book["reviews"][reviewer] = review
+
+    save_books(BOOKS_FILE, books)
+
+    return True
+
+
+if __name__ == "__main__":
+    title_added = parse_issue()
+    # Exit code 1 if nothing was added (optional)
+    exit(0 if title_added else 1)

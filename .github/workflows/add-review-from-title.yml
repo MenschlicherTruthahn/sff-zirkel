@@ -1,4 +1,4 @@
-name: Add review from issue
+name: Add review from issue with title
 
 on:
   issues:
@@ -61,7 +61,7 @@ jobs:
         env:
           GITHUB_EVENT_PATH: ${{ github.event_path }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python add_review.py
+        run: python add_review_from_title.py
 
       - name: Create branch and commit
         id: commit
