@@ -76,8 +76,7 @@ def parse_issue() -> bool:
 
     success = False
     if book: #if book already implies that validate_book returned False as a second value. In a clean version, validate_book does not return any bool
-        success = not
-            validate_reviewer(
+        success = not validate_reviewer(
                 book=book,
                 reviewer=reviewer,
                 participant_field="reviews",
