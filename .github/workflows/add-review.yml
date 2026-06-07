@@ -19,6 +19,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Debug conditions
+        run: |
+          echo "author_association = ${{ github.event.issue.author_association }}"
+          echo "action = ${{ github.event.action }}"
+          echo "labels = ${{ join(github.event.issue.labels.*.name, ', ') }}"
+
+          echo "has_label = ${{ contains(github.event.issue.labels.*.name, 'review_from_title') }}"
+          echo "allowed_author = ${{ contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) }}"
+          echo "body_changed = ${{ github.event.changes.body != null }}"
+
       - name: Checkout
         uses: actions/checkout@v4
 
