@@ -17,7 +17,7 @@ def build_summary(
     review: str,
     warnings: list[str],
     notices: list[str],
-    success: bool,
+    success: bool
 ) -> str:
     lines = ["# SUMMARY"]
     lines.append("✅ **Review saved**" if success else "❌ **Review not saved**")
