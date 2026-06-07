@@ -41,7 +41,7 @@ def build_summary(
 
     return "\n".join(lines)
 
-def get_book_id_from_title(books, title: str) -> str, bool:
+def get_book_id_from_title(books, title: str) -> tuple[str, bool]:
     matching_book_ids = [book_id for book_id, data in books.items() if data.get("meta", {}).get("title") == title]
     if len(matching_book_ids) != 1:
         return None, False
